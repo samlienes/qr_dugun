@@ -1,0 +1,22 @@
+services:
+  # Ana Veritabanı (MariaDB)
+  database:
+    image: mariadb:11
+    container_name: qr_dugun_ani
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: qr_dugun_ani
+    ports:
+      - "3010:3306" # Dışarıdan 3010 ile, içeriden 3306 ile bağlanır
+    networks:
+      - global_network # phpMyAdmin'in seni görmesi için gereken köprü
+    volumes:
+      - db_data:/var/lib/mysql
+
+networks:
+  global_network:
+    external: true # Terminalden oluşturduğumuz "global_network"ü kullanır
+
+volumes:
+  db_data: # Verilerin silinmemesi için gereken fiziksel alan

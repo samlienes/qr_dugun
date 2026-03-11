@@ -1,0 +1,49 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Kodu Doğrula | QR Düğün Anı{% endblock %}
+
+{% block body %}
+    <div class="container mt-5 text-center">
+        <div class="mb-5 animate__animated animate__fadeIn">
+            <i class="fas fa-sms text-primary" style="font-size: 3.5rem;"></i>
+            <h2 class="fw-bold mt-3">Kodu Doğrula</h2>
+            <p class="text-muted">
+                <strong class="text-dark">{{ phoneNumber }}</strong> numarasına gelen <br>
+                6 haneli kodu aşağıya gir kanka.
+            </p>
+        </div>
+
+        <div class="card shadow-lg border-0 rounded-4 mx-auto" style="max-width: 400px;">
+            <div class="card-body p-4 p-md-5">
+                <form action="{{ path('app_verify') }}" method="POST">
+                    {# Gerekli gizli veriler #}
+                    <input type="hidden" name="phoneNumber" value="{{ phoneNumber }}">
+                    <input type="hidden" name="weddingCode" value="{{ weddingCode }}">
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Doğrulama Kodu</label>
+                        <input type="text"
+                               name="code"
+                               class="form-control form-control-lg text-center fw-bold"
+                               placeholder="000000"
+                               maxlength="6"
+                               inputmode="numeric"
+                               pattern="[0-9]*"
+                               required
+                               style="letter-spacing: 8px; font-size: 2rem; border: 2px solid #0d6efd; background-color: #f8f9fa;">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100 rounded-3 shadow-sm fw-bold">
+                        Onayla ve Devam Et <i class="fas fa-check-circle ms-2"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="{{ path('app_home') }}" class="text-decoration-none text-muted small">
+                <i class="fas fa-chevron-left me-1"></i> Geri Dön
+            </a>
+        </div>
+    </div>
+{% endblock %}
