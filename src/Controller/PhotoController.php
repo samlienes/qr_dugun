@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Photo;
 use App\Entity\Wedding;
+use App\Entity\AppUser; // AppUser geri geldi
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -24,6 +25,14 @@ class PhotoController extends AbstractController
         $wedding = $entityManager->getRepository(Wedding::class)->findOneBy(['weddingCode' => $weddingCode]);
         $photoFile = $request->files->get('photo');
 
+        // Session'dan AppUser'ı buluyoruz
+        $appUserId = $request->getSession()->get('app_user_id');
+        $appUser = $entityManager->getRepository(AppUser::class)->find($appUserId);
+
+        if (!$appUser) {
+            return $this->json(['status' => 'error', 'message' => 'Lütfen önce giriş yap kanka.'], 403);
+        }
+
         if ($photoFile && $wedding) {
             $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
             $safeFilename = $slugger->slug($originalFilename);
@@ -35,13 +44,23 @@ class PhotoController extends AbstractController
                 $photo = new Photo();
                 $photo->setFilename($newFilename);
                 $photo->setWedding($wedding);
-                $photo->setAppUser($this->getUser());
+                $photo->setAppUser($appUser); // AppUser ile ilişki
                 $photo->setUploadedAt(new \DateTimeImmutable());
+
+                // Döküman Madde 3: Moderasyon (Başlangıç durumu beklemede)
+                $photo->setStatus('pending');
+
+                // Döküman Madde 6: Loglama (IP Kaydı)
+                $photo->setIpAddress($request->getClientIp());
 
                 $entityManager->persist($photo);
                 $entityManager->flush();
 
-                return $this->json(['status' => 'success', 'filename' => $newFilename]);
+                return $this->json([
+                    'status' => 'success',
+                    'filename' => $newFilename,
+                    'message' => 'Anın kaydedildi, moderatör onayından sonra galeride görünecek!'
+                ]);
             } catch (FileException $e) {
                 return $this->json(['status' => 'error', 'message' => 'Dosya yüklenemedi.'], 500);
             }

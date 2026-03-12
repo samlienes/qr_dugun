@@ -19,24 +19,40 @@ class Photo
     #[ORM\Column]
     private ?\DateTimeImmutable $uploadedAt = null;
 
-    #[ORM\ManyToOne(inversedBy: 'photos')]
-    #[ORM\JoinColumn(nullable: true)] // Düğün bilgisi
-    private ?Wedding $wedding = null;
+    #[ORM\Column(length: 20)]
+    private ?string $status = 'pending';
+
+    #[ORM\Column(length: 45, nullable: true)]
+    private ?string $ipAddress = null;
 
     #[ORM\ManyToOne(inversedBy: 'photos')]
-    #[ORM\JoinColumn(nullable: true)] // Fotoğrafı yükleyen kullanıcı
-    private ?User $appUser = null;
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Wedding $wedding = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?AppUser $appUser = null;
 
     public function __construct() {
         $this->uploadedAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int { return $this->id; }
+
     public function getFilename(): ?string { return $this->filename; }
     public function setFilename(string $filename): static { $this->filename = $filename; return $this; }
+
     public function getUploadedAt(): ?\DateTimeImmutable { return $this->uploadedAt; }
+
+    public function getStatus(): ?string { return $this->status; }
+    public function setStatus(string $status): static { $this->status = $status; return $this; }
+
+    public function getIpAddress(): ?string { return $this->ipAddress; }
+    public function setIpAddress(?string $ipAddress): static { $this->ipAddress = $ipAddress; return $this; }
+
     public function getWedding(): ?Wedding { return $this->wedding; }
     public function setWedding(?Wedding $wedding): static { $this->wedding = $wedding; return $this; }
-    public function getAppUser(): ?User { return $this->appUser; }
-    public function setAppUser(?User $appUser): static { $this->appUser = $appUser; return $this; }
+
+    public function getAppUser(): ?AppUser { return $this->appUser; }
+    public function setAppUser(?AppUser $appUser): static { $this->appUser = $appUser; return $this; }
 }

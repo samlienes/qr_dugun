@@ -40,9 +40,12 @@ class WeddingController extends AbstractController
     #[Route('/wedding/{weddingCode}', name: 'app_wedding_show', methods: ['GET'])]
     public function show(Wedding $wedding, Request $request): Response
     {
+        // Senin RegistrationController'da set ettiğin ID'yi kontrol ediyoruz
+        $appUserId = $request->getSession()->get('app_user_id');
+
         return $this->render('wedding/show.html.twig', [
             'wedding' => $wedding,
-            'isLoggedIn' => $request->getSession()->has('app_user_id') // Giriş kontrolü
+            'isLoggedIn' => ($appUserId !== null) // Eğer session varsa true döner
         ]);
     }
 }

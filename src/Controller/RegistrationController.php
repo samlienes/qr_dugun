@@ -1,10 +1,9 @@
 <?php
-
-// src/Controller/RegistrationController.php
-
 namespace App\Controller;
 
-use App\Entity\User; // AppUser yerine User kullanıyoruz
+use App\Entity\AppUser;
+use App\Entity\UserContract;
+use App\Repository\ContractRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,62 +13,89 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class RegistrationController extends AbstractController
 {
-#[Route('/register', name: 'app_register', methods: ['POST'])]
-public function register(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
-{
-$user = new User();
-$user->setFullName($request->request->get('firstName') . ' ' . $request->request->get('lastName'));
-$user->setPhone($request->request->get('phoneNumber'));
-$user->setIsVerified(false);
+    #[Route('/register', name: 'app_register', methods: ['GET', 'POST'])]
+    public function register(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        UserPasswordHasherInterface $passwordHasher,
+        ContractRepository $contractRepository
+    ): Response {
+        if ($request->isMethod('POST')) {
+            $phone = $request->request->get('phoneNumber');
+            $plainPassword = $request->request->get('password');
 
-// Şirket dökümanına göre e-posta login bilgisidir [cite: 86]
-// Geçici olarak telefon numarasını email alanına veya benzersiz bir değere atayabilirsin
-$user->setEmail($request->request->get('phoneNumber') . '@dugunani.com');
+            if ($entityManager->getRepository(AppUser::class)->findOneBy(['phoneNumber' => $phone])) {
+                $this->addFlash('error', 'Bu numara zaten kayıtlı. Lütfen giriş yap.');
+                return $this->redirectToRoute('app_login');
+            }
 
-// Şifre dökümanda zorunlu değilse bile Security için boş geçilemez
-$user->setPassword($passwordHasher->hashPassword($user, 'temporary_password'));
+            // Yeni AppUser oluşturuluyor
+            $user = new AppUser();
+            $user->setFirstName($request->request->get('firstName'));
+            $user->setLastName($request->request->get('lastName'));
+            $user->setPhoneNumber($phone);
+            $user->setIsVerified(false);
 
-$code = (string)rand(100000, 999999);
-$user->setVerificationCode($code);
+            $hashedPassword = $passwordHasher->hashPassword($user, $plainPassword);
+            $user->setPassword($hashedPassword);
 
-$entityManager->persist($user);
-$entityManager->flush();
+            $code = (string)rand(100000, 999999);
+            $user->setVerificationCode($code);
 
-error_log("---------- SMS KODU: $code ----------");
+            $entityManager->persist($user);
 
-return $this->render('registration/verify.html.twig', [
-'phoneNumber' => $user->getPhone(),
-'weddingCode' => $request->request->get('weddingCode')
-]);
-}
+            // --- YENİ EKLENEN SÖZLEŞME ONAY KISMI ---
+            $latestContract = $contractRepository->findOneBy(['type' => 'user_agreement'], ['version' => 'DESC']);
 
-#[Route('/verify', name: 'app_verify', methods: ['POST'])]
-public function verify(Request $request, EntityManagerInterface $entityManager): Response
-{
-$phone = $request->request->get('phoneNumber');
-$code = $request->request->get('code');
-$weddingCode = $request->request->get('weddingCode');
+            if ($latestContract) {
+                $userContract = new UserContract();
+                $userContract->setAppUser($user); // AppUser ile bağlıyoruz
+                $userContract->setContract($latestContract);
+                $userContract->setAcceptedAt(new \DateTimeImmutable());
+                $userContract->setIpAddress($request->getClientIp());
 
-$user = $entityManager->getRepository(User::class)->findOneBy([
-'phone' => $phone,
-'verificationCode' => $code
-]);
+                $entityManager->persist($userContract);
+            }
+            // ----------------------------------------
 
-if ($user) {
-$user->setIsVerified(true);
-$user->setVerificationCode(null); // Kod kullanıldıktan sonra temizliyoruz
-$entityManager->flush();
+            $entityManager->flush();
 
-// Giriş işlemini manuel olarak tetikleyebilir veya Security üzerinden yönlendirebilirsin
-$this->addFlash('success', 'Doğrulama başarılı!');
+            error_log("---------- KAYIT SMS KODU: $code ----------");
 
-return $this->redirectToRoute('app_wedding_show', ['weddingCode' => $weddingCode]);
-}
+            return $this->render('registration/verify.html.twig', ['phoneNumber' => $phone]);
+        }
 
-$this->addFlash('danger', 'Kod hatalı!');
-return $this->render('registration/verify.html.twig', [
-'phoneNumber' => $phone,
-'weddingCode' => $weddingCode
-]);
-}
+        // GET isteği ile sayfa açılırken sözleşmeyi de gönderiyoruz
+        $contract = $contractRepository->findOneBy(['type' => 'user_agreement'], ['version' => 'DESC']);
+
+        return $this->render('registration/register.html.twig', [
+            'contract' => $contract
+        ]);
+    }
+
+    // --- SİLİNEN VERIFY METODU BURADA ---
+    #[Route('/verify', name: 'app_verify', methods: ['POST'])]
+    public function verify(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $phone = $request->request->get('phoneNumber');
+        $code = $request->request->get('code');
+
+        $user = $entityManager->getRepository(AppUser::class)->findOneBy([
+            'phoneNumber' => $phone,
+            'verificationCode' => $code
+        ]);
+
+        if ($user) {
+            $user->setIsVerified(true);
+            $user->setVerificationCode(null);
+            $entityManager->flush();
+
+            // Kayıt sonrası doğrulama bitti, direkt Login sayfasına atıyoruz.
+            $this->addFlash('success', 'Kayıt ve doğrulama başarılı! Şimdi şifrenle giriş yapabilirsin.');
+            return $this->redirectToRoute('app_login');
+        }
+
+        $this->addFlash('danger', 'Doğrulama kodu hatalı!');
+        return $this->render('registration/verify.html.twig', ['phoneNumber' => $phone]);
+    }
 }

@@ -1,46 +1,22 @@
 {% extends 'base.html.twig' %}
-
+{% block title %}Düğün Kodu Gir{% endblock %}
 {% block body %}
-    <div class="container mt-4 mb-5" style="max-width: 500px;">
-        <div class="text-center mb-4">
-            <h2 class="fw-bold text-primary">QR Düğün Anı</h2>
-            <p class="text-muted">Anıları paylaşmak için giriş yap kanka.</p>
-        </div>
+    <div class="container mt-5 text-center" style="max-width: 500px;">
+        <h2 class="fw-bold text-primary mb-4">Hangi Düğüne Geldin?</h2>
 
-        {# Hata Mesajları (Resmi Dil) #}
         {% for message in app.flashes('error') %}
-            <div class="alert alert-danger rounded-3 shadow-sm mb-4">
-                <i class="fas fa-exclamation-circle me-2"></i>{{ message }}
-            </div>
+            <div class="alert alert-danger">{{ message }}</div>
         {% endfor %}
 
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-body p-4">
-                <form action="{{ path('app_register') }}" method="POST" id="loginForm">
-                    {# KRİTİK: Düğün kodunu sonraki sayfaya taşır #}
-                    <input type="hidden" name="weddingCode" value="{{ weddingCode }}">
-                    <div class="mb-3">
-                        <input type="text" name="firstName" class="form-control form-control-lg rounded-3" placeholder="Adın" required>
-                    </div>
-                    <div class="mb-3">
-                        <input type="text" name="lastName" class="form-control form-control-lg rounded-3" placeholder="Soyadın" required>
-                    </div>
-                    <div class="mb-3">
-                        <input type="tel" name="phoneNumber" class="form-control form-control-lg rounded-3" placeholder="Telefon (05xx...)" required>
-                    </div>
-
-                    <div class="form-check mb-4 mt-3">
-                        <input class="form-check-input" type="checkbox" id="contractCheck" required>
-                        <label class="form-check-label small" for="contractCheck">
-                            <span class="text-primary fw-bold">v1 Sözleşmesini</span> okudum, fotoğraflarımın yayınlanmasını kabul ediyorum.
-                        </label>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary btn-lg w-100 rounded-3 shadow-sm">
-                        Kodu Gönder <i class="fas fa-paper-plane ms-2"></i>
-                    </button>
-                </form>
-            </div>
+        <div class="card p-4 shadow-sm border-0 rounded-4">
+            <form action="{{ path('app_home') }}" method="POST">
+                <div class="mb-4">
+                    <input type="text" name="wedding_code" class="form-control form-control-lg text-center" placeholder="Düğün Kodunu Buraya Gir" required>
+                </div>
+                <button type="submit" class="btn btn-success btn-lg w-100 shadow-sm">
+                    Galeriyeye Git <i class="fas fa-arrow-right ms-2"></i>
+                </button>
+            </form>
         </div>
     </div>
 {% endblock %}

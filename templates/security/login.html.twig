@@ -1,34 +1,57 @@
 {% extends 'base.html.twig' %}
-
-{% block title %}Log in!{% endblock %}
-
+{% block title %}Giriş Yap | QR Düğün Anı{% endblock %}
 {% block body %}
-<form method="post">
-    {% if error %}
-        <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
-    {% endif %}
-
-    {% if app.user %}
-        <div class="mb-3">
-            You are logged in as {{ app.user.userIdentifier }}, <a href="{{ logout_path() }}">Logout</a>
+    <div class="container mt-5 mb-5" style="max-width: 500px;">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold text-primary">Tekrar Hoş Geldin</h2>
+            <p class="text-muted">Telefon numaranı ve şifreni girerek anılara devam et.</p>
         </div>
-    {% endif %}
 
-    <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
-    <label for="inputEmail">Email</label>
-    <input type="email" value="{{ last_username }}" name="email" id="inputEmail" class="form-control" autocomplete="email" required autofocus>
-    <label for="inputPassword">Password</label>
-    <input type="password" name="password" id="inputPassword" class="form-control" autocomplete="current-password" required>
-    <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success rounded-3 shadow-sm mb-4">{{ message }}</div>
+        {% endfor %}
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-danger rounded-3 shadow-sm mb-4">{{ message }}</div>
+        {% endfor %}
 
-    <div class="checkbox mb-3">
-        <label>
-            <input type="checkbox" name="_remember_me"> Remember me
-        </label>
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <form action="{{ path('app_login') }}" method="POST">
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Telefon Numaran</label>
+                        <input type="tel" name="phoneNumber" class="form-control form-control-lg" placeholder="05xx..." required autofocus>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold text-muted">Şifreniz</label>
+                        <input type="password" name="password" id="loginPassword" class="form-control form-control-lg" placeholder="Şifreniz" required>
+                    </div>
+
+                    {# Şifreyi Göster ve Şifremi Unuttum Yanyana #}
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="form-check mb-0">
+                            <input type="checkbox" class="form-check-input" id="showPasswordCheck">
+                            <label class="form-check-label text-muted small" for="showPasswordCheck">Şifreyi Göster</label>
+                        </div>
+                        <a href="{{ path('app_forgot_password') }}" class="text-primary small fw-bold text-decoration-none">Şifremi Unuttum</a>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100 shadow-sm">
+                        Giriş Yap <i class="fas fa-sign-in-alt ms-2"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="mt-4 text-center">
+            <a href="{{ path('app_register') }}" class="text-muted">Hesabın yok mu? Kayıt Ol</a>
+        </div>
     </div>
 
-    <button class="btn btn-lg btn-primary" type="submit">
-        Sign in
-    </button>
-</form>
+    <script>
+        document.getElementById('showPasswordCheck').addEventListener('change', function() {
+            document.getElementById('loginPassword').type = this.checked ? 'text' : 'password';
+        });
+    </script>
 {% endblock %}

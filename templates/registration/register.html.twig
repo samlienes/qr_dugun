@@ -1,45 +1,97 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Kayıt Ol{% endblock %}
-
-{% block stylesheets %}
-    <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
-
-{% endblock %}
+{% block title %}Kayıt Ol | QR Düğün Anı{% endblock %}
 
 {% block body %}
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <h1  class="h3 mb-3 font-weight-normal text-center">Yeni Üyelik Oluştur</h1>
+    <div class="container mt-5 mb-5" style="max-width: 500px;">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold text-primary">Yeni Hesap Oluştur</h2>
+            <p class="text-muted">Anılara ortak olmak için hemen kayıt ol kanka.</p>
+        </div>
 
-                {{ form_start(registrationForm) }}
-                {# Genel hata mesajlarını gösterir #}
-                {{ form_errors(registrationForm) }}
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-danger rounded-3 shadow-sm mb-4">
+                <i class="fas fa-exclamation-circle me-2"></i>{{ message }}
+            </div>
+        {% endfor %}
 
-                <div class="mb-3">
-                    {{ form_row(registrationForm.email, { 'attr': {'class': 'form-control'} }) }}
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <form action="{{ path('app_register') }}" method="POST">
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Adın</label>
+                            <input type="text" name="firstName" class="form-control form-control-lg" placeholder="Ad" required autofocus>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Soyadın</label>
+                            <input type="text" name="lastName" class="form-control form-control-lg" placeholder="Soyad" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Telefon Numaran</label>
+                        <input type="tel" name="phoneNumber" class="form-control form-control-lg" placeholder="05xx..." required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Şifre Oluştur (4-8 Karakter)</label>
+                        <input type="password" name="password" id="registerPassword" class="form-control form-control-lg" placeholder="Yeni Şifreniz" minlength="4" maxlength="8" required>
+                    </div>
+
+                    {# Şifreyi Göster Kutucuğu #}
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="showPasswordCheck">
+                        <label class="form-check-label text-muted small" for="showPasswordCheck">Şifreyi Göster</label>
+                    </div>
+
+                    {# SÖZLEŞME ONAY KUTUCUĞU (Zorunlu) #}
+                    <div class="mb-4 form-check bg-light p-3 rounded-3 border">
+                        <input type="checkbox" name="kvkk_agree" class="form-check-input ms-1 mt-1" id="kvkkCheck" required>
+                        <label class="form-check-label text-muted small ms-2" for="kvkkCheck">
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#kvkkModal" class="text-primary fw-bold text-decoration-none">KVKK ve Kullanıcı Sözleşmesi</a>'ni okudum ve onaylıyorum.
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100 shadow-sm">
+                        Kayıt Ol <i class="fas fa-user-plus ms-2"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="mt-4 text-center">
+            <a href="{{ path('app_login') }}" class="text-muted">Zaten hesabın var mı? Giriş Yap</a>
+        </div>
+    </div>
+
+    {# SÖZLEŞME MODAL'I (Açılır Pencere) #}
+    <div class="modal fade" id="kvkkModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Kullanıcı Sözleşmesi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="mb-3">
-                    {{ form_row(registrationForm.fullName, { 'attr': {'class': 'form-control'} }) }}
+                <div class="modal-body text-muted small">
+                    {% if contract %}
+                        {{ contract.content|raw }}
+                    {% else %}
+                        Sistemde aktif bir sözleşme bulunamadı. Lütfen yönetici ile iletişime geçin.
+                    {% endif %}
                 </div>
-                <div class="mb-3">
-                    {{ form_row(registrationForm.phone, { 'attr': {'class': 'form-control'} }) }}
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Anladım, Kapat</button>
                 </div>
-                <div class="mb-3">
-                    {{ form_row(registrationForm.birthYear, { 'attr': {'class': 'form-control'} }) }}
-                </div>
-                <div class="mb-3">
-                    {{ form_row(registrationForm.plainPassword, {
-                        'label': 'Şifre',
-                        'attr': {'class': 'form-control'}
-                    }) }}
-                </div>
-                <button type="submit" class="btn btn-lg btn-primary w-100">Kayıt Ol</button>
-                {{ form_end(registrationForm) }}
             </div>
         </div>
     </div>
 
-
+    <script>
+        document.getElementById('showPasswordCheck').addEventListener('change', function() {
+            var passwordInput = document.getElementById('registerPassword');
+            passwordInput.type = this.checked ? 'text' : 'password';
+        });
+    </script>
 {% endblock %}
