@@ -8,12 +8,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 
 class SecurityController extends AbstractController
 {
     // --- 1. GİRİŞ YAP (LOGIN) EKRANI ---
     #[Route(path: '/login', name: 'app_login', methods: ['GET', 'POST'])]
-    public function login(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
+    public function login(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, Security $security): Response
     {
         if ($request->isMethod('POST')) {
             $phone = $request->request->get('phoneNumber');
@@ -21,30 +22,29 @@ class SecurityController extends AbstractController
 
             $user = $entityManager->getRepository(AppUser::class)->findOneBy(['phoneNumber' => $phone]);
 
-            // İstediğin 1. Hata: Numara Yoksa
-            if (!$user) {
-                $this->addFlash('error', 'Numaranız sisteme kayıtlı değil.');
+            if (!$user || !$passwordHasher->isPasswordValid($user, $plainPassword)) {
+                $this->addFlash('error', 'Numaranız veya şifreniz hatalı.');
                 return $this->redirectToRoute('app_login');
             }
 
-            // İstediğin 2. Hata: Şifre Yanlışsa
-            if (!$passwordHasher->isPasswordValid($user, $plainPassword)) {
-                $this->addFlash('error', 'Yanlış şifre.');
-                return $this->redirectToRoute('app_login');
-            }
-
-            // Başarılı Giriş -> Ana sayfaya (Düğün Kodu sorma) at
+            // ESKİ SİSTEM: Fotoğraf yükleme vs. için senin id tutma mantığın
             $request->getSession()->set('app_user_id', $user->getId());
+
+            // YENİ SİSTEM: Symfony'nin güvenlik duvarında oturumu başlatır (Hatasız yöntem)
+            $security->login($user);
+
             return $this->redirectToRoute('app_home');
         }
 
         return $this->render('security/login.html.twig');
     }
 
+    // --- ÇIKIŞ YAP (LOGOUT) ---
     #[Route(path: '/logout', name: 'app_logout')]
-    public function logout(Request $request): Response
+    public function logout(Request $request, Security $security): Response
     {
         $request->getSession()->remove('app_user_id');
+        $security->logout(false);
         return $this->redirectToRoute('app_home');
     }
 
@@ -67,7 +67,6 @@ class SecurityController extends AbstractController
 
             error_log("---------- ŞİFRE SIFIRLAMA KODU: $code ----------");
 
-            // Numarayı güvenli şekilde hafızaya (session) alıyoruz ki araya başkası girmesin
             $request->getSession()->set('reset_phone', $phone);
             return $this->redirectToRoute('app_forgot_password_verify');
         }
@@ -79,7 +78,7 @@ class SecurityController extends AbstractController
     public function forgotPasswordVerify(Request $request, EntityManagerInterface $entityManager): Response
     {
         $phone = $request->getSession()->get('reset_phone');
-        if (!$phone) return $this->redirectToRoute('app_login'); // İzinsiz girenleri geri at
+        if (!$phone) return $this->redirectToRoute('app_login');
 
         if ($request->isMethod('POST')) {
             $code = $request->request->get('code');
@@ -91,7 +90,7 @@ class SecurityController extends AbstractController
             if ($user) {
                 $user->setVerificationCode(null);
                 $entityManager->flush();
-                $request->getSession()->set('reset_authorized', true); // Şifre değiştirme yetkisi verdik
+                $request->getSession()->set('reset_authorized', true);
                 return $this->redirectToRoute('app_reset_password');
             }
             $this->addFlash('error', 'Doğrulama kodu hatalı!');
@@ -111,12 +110,10 @@ class SecurityController extends AbstractController
             $user = $entityManager->getRepository(AppUser::class)->findOneBy(['phoneNumber' => $phone]);
 
             if ($user) {
-                // Şifreyi ezip üzerine yazıyoruz
                 $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
                 $user->setPassword($hashedPassword);
                 $entityManager->flush();
 
-                // Güvenlik için yetkileri siliyoruz
                 $request->getSession()->remove('reset_phone');
                 $request->getSession()->remove('reset_authorized');
 

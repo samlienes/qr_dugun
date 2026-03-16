@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Photo;
 use App\Entity\Wedding;
-use App\Entity\AppUser; // AppUser geri geldi
+use App\Entity\AppUser;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -44,13 +44,9 @@ class PhotoController extends AbstractController
                 $photo = new Photo();
                 $photo->setFilename($newFilename);
                 $photo->setWedding($wedding);
-                $photo->setAppUser($appUser); // AppUser ile ilişki
+                $photo->setAppUser($appUser);
                 $photo->setUploadedAt(new \DateTimeImmutable());
-
-                // Döküman Madde 3: Moderasyon (Başlangıç durumu beklemede)
                 $photo->setStatus('pending');
-
-                // Döküman Madde 6: Loglama (IP Kaydı)
                 $photo->setIpAddress($request->getClientIp());
 
                 $entityManager->persist($photo);

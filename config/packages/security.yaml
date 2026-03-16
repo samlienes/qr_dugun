@@ -5,8 +5,8 @@ security:
     providers:
         app_user_provider:
             entity:
-                class: App\Entity\User
-                property: email
+                class: App\Entity\AppUser
+                property: phoneNumber
 
     firewalls:
         dev:
@@ -14,22 +14,22 @@ security:
             security: false
         main:
             lazy: true
+            provider: app_user_provider
+
+            # BURASI DÜZELTİLDİ: Symfony artık senin formunu çalmayacak, sadece girişin neresi olduğunu bilecek.
+            form_login:
+                login_path: app_login
+                check_path: /dummy_login_check
+
             logout:
                 path: app_logout
             security: true
 
     access_control:
+        - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/register, roles: PUBLIC_ACCESS }
         - { path: ^/verify, roles: PUBLIC_ACCESS }
         - { path: ^/wedding, roles: PUBLIC_ACCESS }
         - { path: ^/contract, roles: PUBLIC_ACCESS }
-        - { path: ^/login, roles: PUBLIC_ACCESS }
-
-when@test:
-    security:
-        password_hashers:
-            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
-                algorithm: auto
-                cost: 4
-                time_cost: 3
-                memory_cost: 10
+        # Sadece adminleri korumaya aldık
+        - { path: ^/admin, roles: ROLE_ADMIN }
