@@ -3,11 +3,14 @@
 namespace App\Entity;
 
 use App\Repository\AppUserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: AppUserRepository::class)]
+#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_PHONE', fields: ['phoneNumber'])]
 class AppUser implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -33,8 +36,21 @@ class AppUser implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $password = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'json')]
     private array $roles = [];
+
+    // İZOLASYON İÇİN GEREKEN İLİŞKİ: Salon Yöneticisinin Sorumlu Olduğu Salon
+    #[ORM\ManyToOne(targetEntity: WeddingHall::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?WeddingHall $weddingHall = null;
+
+    #[ORM\ManyToMany(targetEntity: Wedding::class, inversedBy: 'participants')]
+    private Collection $joinedWeddings;
+
+    public function __construct()
+    {
+        $this->joinedWeddings = new ArrayCollection();
+    }
 
     public function getId(): ?int { return $this->id; }
 
@@ -76,7 +92,32 @@ class AppUser implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function eraseCredentials(): void { }
 
-    // --- İŞTE BU EKSİKTİ: SİSTEMİN SENİ HAFIZADA TUTMASINI SAĞLAYAN METOTLAR ---
+    // GETTER VE SETTER (Salon İçin)
+    public function getWeddingHall(): ?WeddingHall { return $this->weddingHall; }
+    public function setWeddingHall(?WeddingHall $weddingHall): self { $this->weddingHall = $weddingHall; return $this; }
+
+    /**
+     * @return Collection<int, Wedding>
+     */
+    public function getJoinedWeddings(): Collection
+    {
+        return $this->joinedWeddings;
+    }
+
+    public function addJoinedWedding(Wedding $wedding): static
+    {
+        if (!$this->joinedWeddings->contains($wedding)) {
+            $this->joinedWeddings->add($wedding);
+        }
+        return $this;
+    }
+
+    public function removeJoinedWedding(Wedding $wedding): static
+    {
+        $this->joinedWeddings->removeElement($wedding);
+        return $this;
+    }
+
     public function __serialize(): array
     {
         return [
@@ -93,5 +134,10 @@ class AppUser implements UserInterface, PasswordAuthenticatedUserInterface
         $this->phoneNumber = $data['phoneNumber'] ?? null;
         $this->password = $data['password'] ?? null;
         $this->roles = $data['roles'] ?? [];
+    }
+
+    public function __toString(): string
+    {
+        return ($this->firstName ?? 'İsimsiz') . ' ' . ($this->lastName ?? 'Kullanıcı') . ' (' . ($this->phoneNumber ?? 'Tel Yok') . ')';
     }
 }

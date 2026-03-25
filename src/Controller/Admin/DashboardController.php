@@ -1,13 +1,6 @@
 <?php
-// src/Controller/Admin/DashboardController.php
-
 namespace App\Controller\Admin;
 
-use App\Entity\AppUser;
-use App\Entity\Wedding;
-use App\Entity\Photo;
-use App\Entity\Contract;
-use App\Entity\WeddingHall;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
@@ -15,14 +8,19 @@ use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Symfony\Component\HttpFoundation\Response;
 
+// YENİ KULLANIM BURASI (Route yerine AdminDashboard kullanılıyor ve class'ın üzerine yazılıyor)
 #[AdminDashboard(routePath: '/admin', routeName: 'admin')]
 class DashboardController extends AbstractDashboardController
 {
     public function index(): Response
     {
-        // YÖNLENDİRME HATASI BURADAN KAYNAKLANIYORDU, BU ŞEKİLDE DÜZELTTİK:
+        if (isset($_GET['crudAction']) || isset($_GET['crudControllerFqcn'])) {
+            return parent::index();
+        }
+
         $adminUrlGenerator = $this->container->get(AdminUrlGenerator::class);
         $url = $adminUrlGenerator
+            ->unsetAll()
             ->setController(WeddingCrudController::class)
             ->generateUrl();
 
@@ -32,41 +30,30 @@ class DashboardController extends AbstractDashboardController
     public function configureDashboard(): Dashboard
     {
         return Dashboard::new()
-            ->setTitle('QR Düğün Anı Yönetim');
+            ->setTitle('QR Düğün Yönetim Paneli');
     }
 
     public function configureMenuItems(): iterable
     {
-        yield MenuItem::linkToDashboard('Dashboard', 'fa fa-home');
+        yield MenuItem::linkToDashboard('Ana Sayfa', 'fa fa-home');
 
-        yield MenuItem::section('Düğün Yönetimi');
-        yield MenuItem::linkToRoute('Düğünler', 'fas fa-ring', 'admin', [
-            'crudAction' => 'index',
-            'crudControllerFqcn' => WeddingCrudController::class
-        ]);
-        yield MenuItem::linkToRoute('Düğün Salonları', 'fas fa-map-marker-alt', 'admin', [
-            'crudAction' => 'index',
-            'crudControllerFqcn' => WeddingHallCrudController::class
-        ]);
+        yield MenuItem::section('İşletme Yönetimi');
 
-        yield MenuItem::section('Kullanıcı ve İçerik');
-        yield MenuItem::linkToRoute('Kullanıcılar', 'fas fa-users', 'admin', [
-            'crudAction' => 'index',
-            'crudControllerFqcn' => AppUserCrudController::class
-        ]);
-        yield MenuItem::linkToRoute('Fotoğraflar', 'fas fa-camera', 'admin', [
-            'crudAction' => 'index',
-            'crudControllerFqcn' => PhotoCrudController::class
-        ]);
+        $urlGen = $this->container->get(AdminUrlGenerator::class);
 
-        yield MenuItem::section('Yasal');
-        yield MenuItem::linkToRoute('Sözleşmeler', 'fas fa-file-contract', 'admin', [
-            'crudAction' => 'index',
-            'crudControllerFqcn' => ContractCrudController::class
-        ]);
-        yield MenuItem::linkToRoute('Sözleşme Onayları', 'fas fa-check-signature', 'admin', [
-            'crudAction' => 'index',
-            'crudControllerFqcn' => UserContractCrudController::class
-        ]);
+        // Salon yöneticilerinin görebileceği alanlar
+        yield MenuItem::linkToUrl('İç Salonlar (Odalar)', 'fas fa-door-open', $urlGen->unsetAll()->setController(WeddingRoomCrudController::class)->generateUrl());
+        yield MenuItem::linkToUrl('Düğünler', 'fas fa-ring', $urlGen->unsetAll()->setController(WeddingCrudController::class)->generateUrl());
+        yield MenuItem::linkToUrl('Fotoğraflar', 'fas fa-camera', $urlGen->unsetAll()->setController(PhotoCrudController::class)->generateUrl());
+
+        // ==========================================
+        // SADECE SÜPER ADMİNİN GÖRECEĞİ KISIMLAR
+        // ==========================================
+        yield MenuItem::section('Sistem Yönetimi')->setPermission('ROLE_SUPER_ADMIN');
+
+        yield MenuItem::linkToUrl('Düğün Salonları (Ana)', 'fas fa-map-marker-alt', $urlGen->unsetAll()->setController(WeddingHallCrudController::class)->generateUrl())->setPermission('ROLE_SUPER_ADMIN');
+        yield MenuItem::linkToUrl('Kullanıcılar / Yöneticiler', 'fas fa-users', $urlGen->unsetAll()->setController(AppUserCrudController::class)->generateUrl())->setPermission('ROLE_SUPER_ADMIN');
+        yield MenuItem::linkToUrl('Sözleşmeler', 'fas fa-file-contract', $urlGen->unsetAll()->setController(ContractCrudController::class)->generateUrl())->setPermission('ROLE_SUPER_ADMIN');
+        yield MenuItem::linkToUrl('Sözleşme Onayları', 'fas fa-check-signature', $urlGen->unsetAll()->setController(UserContractCrudController::class)->generateUrl())->setPermission('ROLE_SUPER_ADMIN');
     }
 }

@@ -8,7 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class RegistrationController extends AbstractController
@@ -23,57 +23,62 @@ class RegistrationController extends AbstractController
         if ($request->isMethod('POST')) {
             $phone = $request->request->get('phoneNumber');
             $plainPassword = $request->request->get('password');
+            $firstName = $request->request->get('firstName');
+            $lastName = $request->request->get('lastName');
 
+            // 1. Kullanıcı zaten var mı kontrol et
             if ($entityManager->getRepository(AppUser::class)->findOneBy(['phoneNumber' => $phone])) {
                 $this->addFlash('error', 'Bu numara zaten kayıtlı. Lütfen giriş yap.');
                 return $this->redirectToRoute('app_login');
             }
 
-            // Yeni AppUser oluşturuluyor
+            // 2. Yeni AppUser oluşturuluyor
             $user = new AppUser();
-            $user->setFirstName($request->request->get('firstName'));
-            $user->setLastName($request->request->get('lastName'));
+            $user->setFirstName($firstName);
+            $user->setLastName($lastName);
             $user->setPhoneNumber($phone);
             $user->setIsVerified(false);
+            $user->setRoles(['ROLE_USER']);
 
             $hashedPassword = $passwordHasher->hashPassword($user, $plainPassword);
             $user->setPassword($hashedPassword);
 
+            // SMS Kodu simülasyonu
             $code = (string)rand(100000, 999999);
             $user->setVerificationCode($code);
 
+            // Kullanıcıyı persist et (henüz flush etme)
             $entityManager->persist($user);
 
-            // --- YENİ EKLENEN SÖZLEŞME ONAY KISMI ---
-            $latestContract = $contractRepository->findOneBy(['type' => 'user_agreement'], ['version' => 'DESC']);
+            // 3. --- KRİTİK: SÖZLEŞME ONAY KAYDI (user_contract tablosu için) ---
+            $latestContract = $contractRepository->findOneBy(['type' => 'user_agreement'], ['id' => 'DESC']);
 
             if ($latestContract) {
                 $userContract = new UserContract();
-                $userContract->setAppUser($user); // AppUser ile bağlıyoruz
-                $userContract->setContract($latestContract);
-                $userContract->setAcceptedAt(new \DateTimeImmutable());
-                $userContract->setIpAddress($request->getClientIp());
+                $userContract->setAppUser($user); // Onaylayan kullanıcı
+                $userContract->setContract($latestContract); // Onaylanan sözleşme
+                $userContract->setAcceptedAt(new \DateTimeImmutable()); // Onay tarihi
+                $userContract->setIpAddress($request->getClientIp()); // Onay IP adresi
 
                 $entityManager->persist($userContract);
             }
-            // ----------------------------------------
 
+            // Tüm işlemleri tek seferde veritabanına yaz
             $entityManager->flush();
 
-            error_log("---------- KAYIT SMS KODU: $code ----------");
+            error_log("---------- KAYIT SMS KODU [{$phone}]: {$code} ----------");
 
             return $this->render('registration/verify.html.twig', ['phoneNumber' => $phone]);
         }
 
-        // GET isteği ile sayfa açılırken sözleşmeyi de gönderiyoruz
-        $contract = $contractRepository->findOneBy(['type' => 'user_agreement'], ['version' => 'DESC']);
+        // GET isteği: Sayfayı sözleşme içeriğiyle birlikte göster
+        $contract = $contractRepository->findOneBy(['type' => 'user_agreement'], ['id' => 'DESC']);
 
         return $this->render('registration/register.html.twig', [
             'contract' => $contract
         ]);
     }
 
-    // --- SİLİNEN VERIFY METODU BURADA ---
     #[Route('/verify', name: 'app_verify', methods: ['POST'])]
     public function verify(Request $request, EntityManagerInterface $entityManager): Response
     {
@@ -90,8 +95,7 @@ class RegistrationController extends AbstractController
             $user->setVerificationCode(null);
             $entityManager->flush();
 
-            // Kayıt sonrası doğrulama bitti, direkt Login sayfasına atıyoruz.
-            $this->addFlash('success', 'Kayıt ve doğrulama başarılı! Şimdi şifrenle giriş yapabilirsin.');
+            $this->addFlash('success', 'Kayıt ve doğrulama başarılı! Şimdi giriş yapabilirsin.');
             return $this->redirectToRoute('app_login');
         }
 

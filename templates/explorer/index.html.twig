@@ -1,0 +1,141 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dosya Yöneticisi{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .file-explorer {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 600px;
+            border: 1px solid #e0e0e0;
+        }
+        .breadcrumb-bar {
+            background: #fff;
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .folder-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 20px;
+        }
+        .file-item {
+            text-align: center;
+            cursor: pointer;
+            padding: 15px 10px;
+            border-radius: 8px;
+            transition: background 0.2s, transform 0.2s;
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .file-item:hover {
+            background: #e9ecef;
+            transform: scale(1.05);
+            color: #0d6efd;
+        }
+        .file-icon {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+        }
+        .folder-icon { color: #ffc107; }
+        .image-icon { color: #0dcaf0; }
+        .item-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+        .action-buttons .btn { margin-left: 5px; }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid mt-4">
+
+        <div class="file-explorer shadow-sm">
+
+            <div class="breadcrumb-bar shadow-sm">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        {% for name, url in breadcrumbs %}
+                            {% if url %}
+                                <li class="breadcrumb-item"><a href="{{ url }}">{{ name }}</a></li>
+                            {% else %}
+                                <li class="breadcrumb-item active" aria-current="page">{{ name }}</li>
+                            {% endif %}
+                        {% endfor %}
+                    </ol>
+                </nav>
+
+                <div class="action-buttons">
+                    {% if type == 'hall' %}
+                        {# Düğün Salonunun içi: Düğün Ekle (Yeni Klasör) #}
+                        <button class="btn btn-sm btn-primary">
+                            <i class="fa-solid fa-folder-plus"></i> Yeni Düğün (Klasör) Ekle
+                        </button>
+                    {% elseif type == 'wedding' %}
+                        {# Düğünün İçi: Fotoğraf Yükle #}
+                        <button class="btn btn-sm btn-success">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Fotoğraf/Video Yükle
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="folder-grid">
+
+                {% if type == 'root' %}
+                    {% for item in items %}
+                        <a href="{{ path('app_salon_hall', {'id': item.id}) }}" class="file-item shadow-sm bg-white border">
+                            <i class="fa-solid fa-folder folder-icon file-icon"></i>
+                            <span class="item-title">{{ item.name }}</span>
+                        </a>
+                    {% else %}
+                        <p class="text-muted w-100 grid-column-full">Sistemde henüz salon bulunmamaktadır.</p>
+                    {% endfor %}
+
+                    {# Eski kod: app_panel_wedding -> Yeni kod: app_salon_wedding #}
+                {% elseif type == 'hall' %}
+                    {% for item in items %}
+                        <a href="{{ path('app_salon_wedding', {'id': item.id}) }}" class="file-item shadow-sm bg-white border">
+                            <i class="fa-solid fa-folder folder-icon file-icon"></i>
+                            <span class="item-title">{{ item.title }}</span>
+                            <small class="text-muted" style="font-size:0.7rem;">{{ item.date|date('d.m.Y') }}</small>
+                        </a>
+                    {% else %}
+                        <p class="text-muted w-100">Bu salona ait düğün bulunamadı.</p>
+                    {% endfor %}
+
+                {% elseif type == 'wedding' %}
+                    {% for item in items %}
+                        <a href="{{ asset('uploads/photos/' ~ item.fileName) }}" target="_blank" class="file-item shadow-sm bg-white border">
+                            {# Eğer resimse thumb göster, değilse icon #}
+                            <i class="fa-regular fa-image image-icon file-icon"></i>
+                            <span class="item-title">{{ item.category|default('Fotoğraf') }}</span>
+                        </a>
+                    {% else %}
+                        <div class="text-center w-100" style="grid-column: 1 / -1;">
+                            <i class="fa-regular fa-folder-open text-muted" style="font-size: 4rem;"></i>
+                            <p class="text-muted mt-2">Bu klasör boş. Üst kısımdan fotoğraf yükleyebilirsiniz.</p>
+                        </div>
+                    {% endfor %}
+
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+{% endblock %}

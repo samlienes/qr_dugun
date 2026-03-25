@@ -1,0 +1,98 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="https://unpkg.com/photoswipe@5.4.3/dist/photoswipe.css">
+    <link rel="stylesheet" href="{{ asset('styles/gallery.css') }}">
+{% endblock %}
+
+{% block body %}
+    <div class="min-h-screen w-full max-w-md mx-auto relative bg-[#f8f8f6] pb-24 shadow-2xl">
+        <header class="sticky top-0 z-50 flex items-center bg-[#f8f8f6]/95 backdrop-blur-md px-4 py-3 border-b border-[#D4AF37]/10">
+            <div class="flex-none w-10">
+                <a href="{{ path('app_wedding_show', {'weddingCode': wedding.weddingCode}) }}">
+                    <span class="material-symbols-outlined text-[#D4AF37]">arrow_back</span>
+                </a>
+            </div>
+            <div class="flex-1 text-center">
+                <h1 class="text-lg font-bold text-slate-900 uppercase tracking-tight">{{ wedding.title }}</h1>
+                <p class="text-[10px] font-semibold text-[#D4AF37] tracking-[0.2em]">LIVE GALLERY</p>
+            </div>
+            <div class="flex-none w-10 text-right"><span class="material-symbols-outlined text-[#D4AF37]">notifications</span></div>
+        </header>
+
+        <main class="px-2">
+            <div class="flex flex-col items-center py-6">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute h-full w-full rounded-full bg-[#D4AF37] opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-[#D4AF37]"></span>
+                    </span>
+                    <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">Canlı Galeri</h2>
+                </div>
+                <p class="text-xs text-slate-400 italic">Capturing every moment, together.</p>
+            </div>
+
+            <div id="photo-grid" class="pswp-gallery">
+                {% for photo in photos %}
+                    <div class="photo-card bg-white mb-4 rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                        <a href="{{ asset('uploads/photos/' ~ photo.filename) }}" data-pswp-width="1200" data-pswp-height="1600" class="img-wrapper block">
+                            <img src="{{ asset('uploads/photos/' ~ photo.filename) }}" loading="lazy" class="w-full h-auto object-cover">
+                        </a>
+
+                        <div class="p-3">
+                            <div class="user-tag flex justify-between items-center mb-2">
+                                <div class="flex items-center gap-2 overflow-hidden">
+                                    <div class="w-6 h-6 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center text-[10px] font-bold">
+                                        {{ photo.appUser ? photo.appUser.firstName|first : 'M' }}
+                                    </div>
+                                    <span class="text-[11px] font-medium text-slate-700 truncate">{{ photo.appUser ? photo.appUser.firstName : 'Misafir' }}</span>
+                                </div>
+                                <span class="text-[9px] text-slate-400">{{ photo.uploadedAt|date('H:i') }}</span>
+                            </div>
+
+                            {% if photo.message %}
+                                <p class="text-xs text-slate-600 font-medium italic mt-1 border-l-2 border-[#D4AF37]/40 pl-2 py-0.5">
+                                    "{{ photo.message }}"
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </main>
+
+        <nav class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-around py-3 pb-6 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+            <a href="{{ path('app_wedding_show', {'weddingCode': wedding.weddingCode}) }}" class="flex flex-col items-center {% if app.request.attributes.get('_route') == 'app_wedding_show' %}text-[#D4AF37]{% else %}text-slate-400 hover:text-[#D4AF37]{% endif %} transition-colors">
+                <span class="material-symbols-outlined {% if app.request.attributes.get('_route') == 'app_wedding_show' %}fill-1{% endif %}">home</span>
+                <span class="text-[10px] font-bold mt-1 uppercase">Feed</span>
+            </a>
+            <a href="{{ path('app_wedding_upload', {'weddingCode': wedding.weddingCode}) }}" class="flex flex-col items-center {% if app.request.attributes.get('_route') == 'app_wedding_upload' %}text-[#D4AF37]{% else %}text-slate-400 hover:text-[#D4AF37]{% endif %} transition-colors">
+                <span class="material-symbols-outlined {% if app.request.attributes.get('_route') == 'app_wedding_upload' %}fill-1{% endif %}">cloud_upload</span>
+                <span class="text-[10px] font-bold mt-1 uppercase">Upload</span>
+            </a>
+            <a href="{{ path('app_wedding_gallery', {'weddingCode': wedding.weddingCode}) }}" class="flex flex-col items-center {% if app.request.attributes.get('_route') == 'app_wedding_gallery' %}text-[#D4AF37]{% else %}text-slate-400 hover:text-[#D4AF37]{% endif %} transition-colors">
+                <span class="material-symbols-outlined {% if app.request.attributes.get('_route') == 'app_wedding_gallery' %}fill-1{% endif %}">favorite</span>
+                <span class="text-[10px] font-bold mt-1 uppercase">Gallery</span>
+            </a>
+            <a href="{{ path('app_wedding_profile', {'weddingCode': wedding.weddingCode}) }}" class="flex flex-col items-center {% if app.request.attributes.get('_route') == 'app_wedding_profile' %}text-[#D4AF37]{% else %}text-slate-400 hover:text-[#D4AF37]{% endif %} transition-colors">
+                <span class="material-symbols-outlined {% if app.request.attributes.get('_route') == 'app_wedding_profile' %}fill-1{% endif %}">person</span>
+                <span class="text-[10px] font-bold mt-1 uppercase">Profile</span>
+            </a>
+        </nav>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script type="module">
+        import PhotoSwipeLightbox from 'https://unpkg.com/photoswipe@5.4.3/dist/photoswipe-lightbox.esm.js';
+        const lightbox = new PhotoSwipeLightbox({
+            gallery: '#photo-grid',
+            children: 'a.img-wrapper',
+            pswpModule: () => import('https://unpkg.com/photoswipe@5.4.3/dist/photoswipe.esm.js')
+        });
+        lightbox.init();
+    </script>
+{% endblock %}

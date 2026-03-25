@@ -25,12 +25,15 @@ class Photo
     #[ORM\Column(length: 45, nullable: true)]
     private ?string $ipAddress = null;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $message = null;
+
     #[ORM\ManyToOne(inversedBy: 'photos')]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: false)] // DÜZELTME: nullable false yapıldı
     private ?Wedding $wedding = null;
 
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: false)] // DÜZELTME: nullable false yapıldı
     private ?AppUser $appUser = null;
 
     public function __construct() {
@@ -49,6 +52,9 @@ class Photo
 
     public function getIpAddress(): ?string { return $this->ipAddress; }
     public function setIpAddress(?string $ipAddress): static { $this->ipAddress = $ipAddress; return $this; }
+
+    public function getMessage(): ?string { return $this->message; }
+    public function setMessage(?string $message): static { $this->message = $message; return $this; }
 
     public function getWedding(): ?Wedding { return $this->wedding; }
     public function setWedding(?Wedding $wedding): static { $this->wedding = $wedding; return $this; }

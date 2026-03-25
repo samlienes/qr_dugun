@@ -1,22 +1,125 @@
 {% extends 'base.html.twig' %}
-{% block title %}Düğün Kodu Gir{% endblock %}
+
+{% block title %}Wedding Memories - Büyük Güne Hoş Geldin{% endblock %}
+
+{% block stylesheets %}
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400&display=swap" rel="stylesheet"/>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'wedding-gold': '#d4a836',
+                        'wedding-gold-light': '#e9c46a',
+                        'wedding-gold-dark': '#b9922d',
+                        'wedding-gray': '#71717a',
+                        'wedding-bg': '#ffffff',
+                    },
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'serif'],
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .font-wedding-heading {
+            font-family: 'Playfair Display', serif;
+        }
+        .font-wedding-body {
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        .hero-shadow {
+            box-shadow: 0 20px 40px -15px rgba(212, 168, 54, 0.2);
+        }
+        .bg-accent-gradient {
+            background: radial-gradient(circle at top left, #fffaf0 0%, transparent 70%),
+            radial-gradient(circle at bottom right, #fffaf0 0%, transparent 70%);
+        }
+        /* Mobile App Feel Adjustments */
+        body {
+            overscroll-behavior-y: none;
+            background-color: #f9fafb; /* bg-gray-50 */
+        }
+        .app-container {
+            height: 100dvh;
+            width: 100%;
+            max-width: 430px; /* iPhone 15 Pro Max width approx */
+            margin: 0 auto;
+        }
+    </style>
+{% endblock %}
+
 {% block body %}
-    <div class="container mt-5 text-center" style="max-width: 500px;">
-        <h2 class="fw-bold text-primary mb-4">Hangi Düğüne Geldin?</h2>
+    <div class="flex items-center justify-center font-wedding-body selection:bg-wedding-gold/30 min-h-screen">
+        <main class="app-container bg-wedding-bg overflow-hidden shadow-2xl relative flex flex-col items-center">
+            <div class="bg-accent-gradient absolute inset-0 pointer-events-none opacity-60"></div>
 
-        {% for message in app.flashes('error') %}
-            <div class="alert alert-danger">{{ message }}</div>
-        {% endfor %}
+            <div class="h-1 bg-gradient-to-r from-transparent via-wedding-gold to-transparent w-full shrink-0"></div>
 
-        <div class="card p-4 shadow-sm border-0 rounded-4">
-            <form action="{{ path('app_home') }}" method="POST">
-                <div class="mb-4">
-                    <input type="text" name="wedding_code" class="form-control form-control-lg text-center" placeholder="Düğün Kodunu Buraya Gir" required>
-                </div>
-                <button type="submit" class="btn btn-success btn-lg w-100 shadow-sm">
-                    Galeriyeye Git <i class="fas fa-arrow-right ms-2"></i>
-                </button>
-            </form>
-        </div>
+            <div class="flex-1 w-full px-8 py-10 flex flex-col items-center relative z-10">
+                <header class="flex flex-col items-center gap-3 mb-8 shrink-0" data-purpose="branding">
+                    <span class="text-3xl drop-shadow-sm">💛</span>
+                    <h1 class="uppercase tracking-[0.3em] text-[11px] font-bold text-gray-800">Wedding Memories</h1>
+                </header>
+                <section class="w-full mb-8 px-2" data-purpose="hero-image-container">
+                    <div class="aspect-[4/5] rounded-[2.5rem] overflow-hidden hero-shadow border-[8px] border-white ring-1 ring-gray-100 relative group">
+                        {# Varsayılan google görseli yerine projeye uygun şık bir düğün görseli koydum #}
+                        <img alt="Wedding Couple" class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=2070&auto=format&fit=crop"/>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                    </div>
+                </section>
+                {% for message in app.flashes('error') %}
+                    <div class="w-full bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-xs text-center mb-4 shadow-sm">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+
+                <form action="{{ path('app_home') }}" method="POST" class="w-full flex-1 flex flex-col justify-center gap-6">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('search_wedding') }}">
+                    <div class="space-y-2">
+                        <label class="block text-[10px] uppercase tracking-widest font-semibold text-wedding-gray ml-1" for="wedding-code">Düğün Kodu</label>
+                        <div class="relative">
+                            <input class="w-full bg-white border border-gray-200 rounded-2xl py-4 px-5 text-lg font-medium focus:ring-2 focus:ring-wedding-gold/20 focus:border-wedding-gold outline-none transition-all placeholder:text-gray-300 shadow-sm"
+                                   id="wedding-code"
+                                   name="wedding_code"
+                                   value="{{ weddingCode|default('') }}"
+                                   required
+                                   placeholder="Örn: AHMET2024"
+                                   type="text"/>
+                            <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-300">
+                            qr_code_scanner
+                        </span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-wedding-gold hover:bg-wedding-gold-dark text-white font-semibold py-4 px-6 rounded-2xl flex items-center justify-between group transition-all active:scale-[0.98] shadow-lg shadow-wedding-gold/20">
+                        <span class="flex-1 text-center tracking-wide uppercase text-sm">Paylaşmaya Başla</span>
+                        <span class="material-symbols-outlined transition-transform group-hover:translate-x-1">
+                        arrow_forward_ios
+                    </span>
+                    </button>
+                </form>
+                <footer class="mt-8 shrink-0">
+                    <p class="text-[10px] text-wedding-gray/70 text-center leading-relaxed max-w-[240px] mx-auto">
+                        Giriş yaparak kullanım koşullarını ve gizlilik politikasını kabul etmiş sayılırsınız.
+                    </p>
+                </footer>
+            </div>
+
+            <div class="h-6 w-full flex justify-center items-end pb-2">
+                <div class="h-1 w-32 bg-gray-200 rounded-full"></div>
+            </div>
+        </main>
     </div>
 {% endblock %}

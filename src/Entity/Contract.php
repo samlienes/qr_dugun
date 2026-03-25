@@ -44,4 +44,8 @@ class Contract
 
     public function getCreatedAt(): ?\DateTimeImmutable { return $this->createdAt; }
     public function setCreatedAt(\DateTimeImmutable $createdAt): self { $this->createdAt = $createdAt; return $this; }
+    public function __toString(): string
+    {
+        return (string) $this->title; // Listede sözleşmenin başlığı görünsün
+    }
 }

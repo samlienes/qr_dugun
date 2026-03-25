@@ -1,20 +1,105 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello WeddingController!{% endblock %}
+{% block title %}{{ wedding.title}} - Hoş Geldiniz{% endblock %}
+
+{% block stylesheets %}
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#D4AF37",
+                        "primary-light": "#E5C76B",
+                        "background-light": "#f8f8f6",
+                        "background-dark": "#221d10",
+                    },
+                    fontFamily: {
+                        "display": ["Work Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Work Sans', sans-serif; min-height: 100dvh; }
+        .luxury-gradient { background: linear-gradient(180deg, rgba(248, 248, 246, 0) 0%, rgba(248, 248, 246, 1) 100%); }
+    </style>
+{% endblock %}
 
 {% block body %}
-<style>
-    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
-</style>
+    <div class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden">
+        <div class="relative flex h-auto min-h-screen w-full flex-col max-w-md mx-auto shadow-2xl bg-background-light dark:bg-background-dark">
+            <nav class="flex items-center p-4 justify-between bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md sticky top-0 z-20">
+                <a href="{{ path('app_home') }}" class="text-slate-900 dark:text-slate-100 flex size-10 shrink-0 items-center justify-center cursor-pointer">
+                    <span class="material-symbols-outlined text-2xl">close</span>
+                </a>
+                <h2 class="text-slate-900 dark:text-slate-100 text-sm font-semibold uppercase tracking-widest flex-1 text-center">{{ wedding.title }}</h2>
+                <div class="flex size-10 items-center justify-center"></div>
+            </nav>
 
-<div class="example-wrapper">
-    <h1>Hello {{ controller_name }}! ✅</h1>
+            <div class="relative w-full @container">
+                <div class="px-6 pt-2 pb-6">
+                    <div class="aspect-[4/5] w-full bg-center bg-no-repeat bg-cover flex flex-col justify-end overflow-hidden rounded-xl shadow-sm border border-primary/10 relative"
+                         style='background-image: url("https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=2070&auto=format&fit=crop");'>
+                        <div class="absolute inset-0 luxury-gradient"></div>
+                    </div>
+                </div>
+            </div>
 
-    This friendly message is coming from:
-    <ul>
-        <li>Your controller at <code>/Users/enes/qr_dugun_ani/src/Controller/WeddingController.php</code></li>
-        <li>Your template at <code>/Users/enes/qr_dugun_ani/templates/wedding/index.html.twig</code></li>
-    </ul>
-</div>
+            <main class="flex-1 flex flex-col items-center justify-start px-8 text-center">
+                <div class="mb-6 text-primary">
+                    <span class="material-symbols-outlined text-5xl font-light" style="font-variation-settings: 'FILL' 1">favorite</span>
+                </div>
+
+                <h1 class="text-slate-900 dark:text-slate-100 text-3xl font-bold leading-tight tracking-tight mb-4">
+                    {{ wedding.title}}'nin <br/>
+                    <span class="text-primary italic font-serif">Düğününe Hoş Geldiniz</span>
+                </h1>
+
+                <p class="text-slate-600 dark:text-slate-400 text-base font-normal leading-relaxed mb-8 max-w-[280px]">
+                    Bu özel günün anılarını bizimle paylaşarak mutluluğumuza ortak olun.
+                </p>
+
+                <div class="w-full flex flex-col gap-4 pb-12 mt-4">
+                    {% if app.user %}
+                        <a href="{{ path('app_wedding_show', {'weddingCode': wedding.weddingCode}) }}"
+                           class="w-full flex items-center justify-center rounded-full h-14 bg-primary text-white text-base font-bold shadow-lg shadow-primary/30 hover:bg-primary-light transition-all">
+                            <span>Düğün Paneline Git</span>
+                            <span class="material-symbols-outlined ml-2">arrow_forward</span>
+                        </a>
+                    {% else %}
+                        <div class="flex flex-col gap-3">
+                            <a href="{{ path('app_login') }}"
+                               class="w-full flex items-center justify-center rounded-full h-14 bg-primary text-white text-base font-bold shadow-lg shadow-primary/30 hover:bg-primary-light transition-all">
+                                <span class="material-symbols-outlined mr-2">login</span>
+                                <span>Giriş Yap</span>
+                            </a>
+                            <a href="{{ path('app_register') }}"
+                               class="w-full flex items-center justify-center rounded-full h-14 bg-white text-primary border-2 border-primary text-base font-bold hover:bg-primary/5 transition-all">
+                                <span class="material-symbols-outlined mr-2">person_add</span>
+                                <span>Üye Ol</span>
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </main>
+
+            <footer class="p-6 flex justify-center items-center gap-6 border-t border-primary/10 mt-auto">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-sm">calendar_today</span>
+                    <span class="text-[10px] font-bold uppercase tracking-tighter text-slate-500">{{ wedding.date ? wedding.date|date('d F Y') : 'Belirtilmedi' }}</span>
+                </div>
+                <div class="w-1 h-1 rounded-full bg-primary/30"></div>
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-sm">location_on</span>
+                    <span class="text-[10px] font-bold uppercase tracking-tighter text-slate-500">{{ wedding.weddingHall ? wedding.weddingHall.name : 'Mekan Belirtilmedi' }}</span>
+                </div>
+            </footer>
+        </div>
+    </div>
 {% endblock %}

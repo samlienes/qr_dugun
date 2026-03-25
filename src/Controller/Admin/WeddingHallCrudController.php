@@ -5,7 +5,9 @@ use App\Entity\WeddingHall;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\NumberField;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[IsGranted('ROLE_SUPER_ADMIN')]
 class WeddingHallCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string

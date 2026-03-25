@@ -13,7 +13,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:make-admin',
-    description: 'Verilen telefon numarasına sahip kullanıcıyı admin yapar.',
+    description: 'Verilen telefon numarasına sahip kullanıcıyı SÜPER ADMİN (Sistem Sahibi) yapar.',
 )]
 class MakeAdminCommand extends Command
 {
@@ -43,13 +43,18 @@ class MakeAdminCommand extends Command
         }
 
         $roles = $user->getRoles();
-        if (!in_array('ROLE_ADMIN', $roles)) {
-            $roles[] = 'ROLE_ADMIN';
+
+        // BURASI DEĞİŞTİ: Artık ROLE_SUPER_ADMIN veriyoruz!
+        if (!in_array('ROLE_SUPER_ADMIN', $roles)) {
+            $roles[] = 'ROLE_SUPER_ADMIN';
+            $roles[] = 'ROLE_ADMIN'; // Ne olur ne olmaz bunu da ekleyelim
             $user->setRoles(array_unique($roles));
+
             $this->entityManager->flush();
-            $io->success('Kullanıcıya başarıyla admin yetkisi verildi kanka! Artık panele girebilirsin.');
+            $io->success('Harika! Kullanıcıya başarıyla SÜPER ADMİN yetkisi verildi. Tüm panele erişebilirsin.');
+            $io->warning('ÖNEMLİ: Yetkilerin aktif olması için lütfen tarayıcıda siteden ÇIKIŞ YAPIP (Logout) TEKRAR GİRİŞ YAPIN!');
         } else {
-            $io->note('Bu kullanıcı zaten admin.');
+            $io->note('Bu kullanıcı zaten SÜPER ADMİN yetkisine sahip.');
         }
 
         return Command::SUCCESS;

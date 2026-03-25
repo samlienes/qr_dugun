@@ -1,0 +1,124 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Profilim - QR Düğün Anı{% endblock %}
+
+{% block stylesheets %}
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { "primary": "#D4AF37", "background-light": "#f8f8f6" }, fontFamily: { "display": ["Work Sans", "sans-serif"] } } }
+        }
+    </script>
+{% endblock %}
+
+{% block body %}
+    <div class="relative flex min-h-screen w-full max-w-md mx-auto flex-col bg-background-light shadow-2xl font-display antialiased pb-24">
+
+        <div class="bg-white p-6 pt-10 rounded-b-3xl shadow-sm text-center border-b border-[#D4AF37]/20 relative">
+            <div class="size-20 bg-[#D4AF37]/10 text-[#D4AF37] rounded-full mx-auto flex items-center justify-center text-3xl font-bold mb-3 border-2 border-[#D4AF37]/30">
+                {{ user.firstName|first|upper }}{{ user.lastName|first|upper }}
+            </div>
+            <h2 class="text-2xl font-bold text-slate-800">{{ user.firstName }} {{ user.lastName }}</h2>
+            <p class="text-sm font-medium text-slate-500 mt-1 tracking-widest">{{ user.phoneNumber }}</p>
+
+            <a href="{{ path('app_logout') }}" class="inline-flex items-center gap-1 mt-6 text-[10px] uppercase tracking-widest font-bold text-red-500 bg-red-50 px-5 py-2.5 rounded-full border border-red-100 hover:bg-red-100 transition-colors">
+                <span class="material-symbols-outlined text-[14px]">logout</span>
+                Çıkış Yap
+            </a>
+        </div>
+
+        <div class="p-5 space-y-4">
+            <div class="bg-white rounded-2xl shadow-sm border border-[#D4AF37]/10 overflow-hidden">
+                <button onclick="toggleSection('weddings-section', 'weddings-icon')" class="w-full flex items-center justify-between p-4 focus:outline-none bg-white hover:bg-slate-50 transition-colors">
+                    <h3 class="text-[10px] font-bold text-[#D4AF37] uppercase tracking-widest flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[16px]">celebration</span> Katıldığım Düğünler
+                        <span class="bg-[#D4AF37]/10 text-[#D4AF37] px-2 py-0.5 rounded-full ml-1 text-[9px]">{{ user.joinedWeddings|length }}</span>
+                    </h3>
+                    <span id="weddings-icon" class="material-symbols-outlined text-[#D4AF37] transition-transform duration-300">expand_more</span>
+                </button>
+
+                <div id="weddings-section" class="hidden px-4 pb-4 pt-1 space-y-3 border-t border-slate-50 mt-1">
+                    {% for joinedWedding in user.joinedWeddings %}
+                        <a href="{{ path('app_wedding_show', {'weddingCode': joinedWedding.weddingCode}) }}" class="flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-[#D4AF37]/30 bg-slate-50 hover:bg-white transition-all group mt-2">
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm group-hover:text-[#D4AF37] transition-colors">{{ joinedWedding.title }}</h4>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <p class="text-[10px] font-medium text-slate-500 uppercase tracking-wider">{{ joinedWedding.date ? joinedWedding.date|date('d F Y') : 'Tarih Belirtilmedi' }}</p>
+                                    <span class="text-slate-300">•</span>
+                                    <p class="text-[10px] font-bold text-[#D4AF37] uppercase tracking-wider">{{ photoCounts[joinedWedding.id]|default(0) }} Anı Yükledin</p>
+                                </div>
+                            </div>
+                            <span class="material-symbols-outlined text-[#D4AF37] opacity-50 group-hover:opacity-100">chevron_right</span>
+                        </a>
+                    {% else %}
+                        <p class="text-xs text-slate-400 italic text-center py-4 mt-2">Henüz hiçbir düğüne katılmadın.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-[#D4AF37]/10 overflow-hidden">
+                <button onclick="toggleSection('contracts-section', 'contracts-icon')" class="w-full flex items-center justify-between p-4 focus:outline-none bg-white hover:bg-slate-50 transition-colors">
+                    <h3 class="text-[10px] font-bold text-[#D4AF37] uppercase tracking-widest flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[16px]">verified_user</span> Onaylanan Sözleşmeler
+                        <span class="bg-[#D4AF37]/10 text-[#D4AF37] px-2 py-0.5 rounded-full ml-1 text-[9px]">{{ userContracts|length }}</span>
+                    </h3>
+                    <span id="contracts-icon" class="material-symbols-outlined text-[#D4AF37] transition-transform duration-300">expand_more</span>
+                </button>
+
+                <div id="contracts-section" class="hidden px-4 pb-4 pt-1 space-y-3 border-t border-slate-50 mt-1">
+                    {% for uc in userContracts %}
+                        <div class="p-4 rounded-xl border border-slate-100 bg-slate-50 flex flex-col gap-1 mt-2">
+                            <h4 class="font-bold text-slate-800 text-xs">{{ uc.contract.title }}</h4>
+                            <div class="flex items-center justify-between mt-2">
+                                <span class="text-[9px] font-medium text-slate-400 uppercase">Onay Tarihi:</span>
+                                <span class="text-[10px] font-bold text-slate-600">{{ uc.acceptedAt|date('d.m.Y H:i') }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[9px] font-medium text-slate-400 uppercase">Kayıtlı IP:</span>
+                                <span class="text-[10px] font-bold text-slate-600">{{ uc.ipAddress }}</span>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-xs text-slate-400 italic text-center py-4 mt-2">Kayıtlı sözleşme bulunamadı.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <nav class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 flex justify-around py-3 pb-6 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+            <a href="{{ path('app_wedding_show', {'weddingCode': wedding.weddingCode}) }}" class="flex flex-col items-center {% if app.request.attributes.get('_route') == 'app_wedding_show' %}text-[#D4AF37]{% else %}text-slate-400 hover:text-[#D4AF37]{% endif %} transition-colors">
+                <span class="material-symbols-outlined {% if app.request.attributes.get('_route') == 'app_wedding_show' %}fill-1{% endif %}">home</span>
+                <span class="text-[10px] font-bold mt-1 uppercase">Feed</span>
+            </a>
+            <a href="{{ path('app_wedding_upload', {'weddingCode': wedding.weddingCode}) }}" class="flex flex-col items-center {% if app.request.attributes.get('_route') == 'app_wedding_upload' %}text-[#D4AF37]{% else %}text-slate-400 hover:text-[#D4AF37]{% endif %} transition-colors">
+                <span class="material-symbols-outlined {% if app.request.attributes.get('_route') == 'app_wedding_upload' %}fill-1{% endif %}">cloud_upload</span>
+                <span class="text-[10px] font-bold mt-1 uppercase">Upload</span>
+            </a>
+            <a href="{{ path('app_wedding_gallery', {'weddingCode': wedding.weddingCode}) }}" class="flex flex-col items-center {% if app.request.attributes.get('_route') == 'app_wedding_gallery' %}text-[#D4AF37]{% else %}text-slate-400 hover:text-[#D4AF37]{% endif %} transition-colors">
+                <span class="material-symbols-outlined {% if app.request.attributes.get('_route') == 'app_wedding_gallery' %}fill-1{% endif %}">favorite</span>
+                <span class="text-[10px] font-bold mt-1 uppercase">Gallery</span>
+            </a>
+            <a href="{{ path('app_wedding_profile', {'weddingCode': wedding.weddingCode}) }}" class="flex flex-col items-center {% if app.request.attributes.get('_route') == 'app_wedding_profile' %}text-[#D4AF37]{% else %}text-slate-400 hover:text-[#D4AF37]{% endif %} transition-colors">
+                <span class="material-symbols-outlined {% if app.request.attributes.get('_route') == 'app_wedding_profile' %}fill-1{% endif %}">person</span>
+                <span class="text-[10px] font-bold mt-1 uppercase">Profile</span>
+            </a>
+        </nav>
+    </div>
+
+    <script>
+        function toggleSection(sectionId, iconId) {
+            const section = document.getElementById(sectionId);
+            const icon = document.getElementById(iconId);
+
+            if (section.classList.contains('hidden')) {
+                section.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                section.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+    </script>
+{% endblock %}

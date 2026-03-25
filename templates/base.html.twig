@@ -1,3 +1,4 @@
+{# templates/base.html.twig #}
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -5,24 +6,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}QR Düğün Anı{% endblock %}</title>
 
-    {# 1. BOOTSTRAP 5 CSS (Mutlaka <head> içinde olmalı) #}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-
-    {# İkonlar için FontAwesome (Login sayfasındaki ok ve kilit ikonları için gerekli) #}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/css/intlTelInput.css">
 
-    {% block stylesheets %}
-    {% endblock %}
+
+    <style>
+        :root {
+            --primary-gold: #D4AF37;
+            --gold-hover: #b8952d;
+            --gold-light: rgba(212, 175, 55, 0.1);
+        }
+        /* Mavi olan her şeyi gold ile eziyoruz */
+        .btn-primary, .btn-info {
+            background-color: var(--primary-gold) !important;
+            border-color: var(--primary-gold) !important;
+            color: white !important;
+        }
+        .btn-primary:hover, .btn-info:hover {
+            background-color: var(--gold-hover) !important;
+            border-color: var(--gold-hover) !important;
+        }
+        .text-primary, .text-info { color: var(--primary-gold) !important; }
+        .bg-primary, .bg-info { background-color: var(--primary-gold) !important; }
+        .alert-primary, .alert-info {
+            background-color: var(--gold-light) !important;
+            border-color: var(--primary-gold) !important;
+            color: var(--gold-hover) !important;
+        }
+        /* Form odaklanma rengi */
+        .form-control:focus {
+            border-color: var(--primary-gold);
+            box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.25);
+        }
+    </style>
+
+    {% block stylesheets %}{% endblock %}
 </head>
 <body class="bg-light">
-
-{# Senin diğer sayfalarda yazdığın kodlar buraya gelecek #}
 {% block body %}{% endblock %}
-
-{# 2. BOOTSTRAP 5 JS (Mutlaka </body> kapanmadan hemen önce olmalı) #}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-
-{% block javascripts %}
-{% endblock %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js"></script>
+{% block javascripts %}{% endblock %}
 </body>
 </html>
