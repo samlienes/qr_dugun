@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controller\Admin;
 
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
@@ -9,41 +10,43 @@ use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[AdminDashboard(routePath: '/salon-admin', routeName: 'salon_admin')]
+// routePath değeri /salon olarak güncellendi
+#[AdminDashboard(routePath: '/salon', routeName: 'salon_admin')]
 #[IsGranted('ROLE_ADMIN')]
 class SalonDashboardController extends AbstractDashboardController
 {
-    public function index(): Response
-    {
-        if (isset($_GET['crudAction']) || isset($_GET['crudControllerFqcn'])) {
-            return parent::index();
-        }
+public function index(): Response
+{
+if (isset($_GET['crudAction']) || isset($_GET['crudControllerFqcn'])) {
+return parent::index();
+}
 
-        // Ana ekrana girince direkt 1. Klasör olan "İç Salonlar" sayfasına yönlendir
-        $adminUrlGenerator = $this->container->get(AdminUrlGenerator::class);
-        $url = $adminUrlGenerator
-            ->unsetAll()
-            ->setDashboard(self::class)
-            ->setController(WeddingRoomCrudController::class)
-            ->generateUrl();
+$adminUrlGenerator = $this->container->get(AdminUrlGenerator::class);
+$url = $adminUrlGenerator
+->unsetAll()
+->setDashboard(self::class)
+->setController(WeddingRoomCrudController::class)
+->generateUrl();
 
-        return $this->redirect($url);
-    }
+return $this->redirect($url);
+}
 
-    public function configureDashboard(): Dashboard
-    {
-        return Dashboard::new()->setTitle('Salon Yönetim Paneli');
-    }
+public function configureDashboard(): Dashboard
+{
+return Dashboard::new()->setTitle('Salon Yönetim Paneli');
+}
 
-    public function configureMenuItems(): iterable
-    {
-        yield MenuItem::linkToDashboard('Ana Sayfa', 'fa fa-home');
+public function configureMenuItems(): iterable
+{
+yield MenuItem::linkToDashboard('Ana Sayfa', 'fa fa-home');
 
-        yield MenuItem::section('Klasörler');
+yield MenuItem::section('Yönetim');
 
-        $urlGen = $this->container->get(AdminUrlGenerator::class)->setDashboard(self::class);
+$urlGen = $this->container->get(AdminUrlGenerator::class)->setDashboard(self::class);
 
-        // Menüde SADECE en üst klasör olan İç Salonlar görünecek
-        yield MenuItem::linkToUrl('📁 İç Salonlarım (Odalar)', 'fas fa-door-open', $urlGen->unsetAll()->setController(WeddingRoomCrudController::class)->generateUrl());
-    }
+// Görevli kendi salonunun odalarını, düğünlerini ve fotoğraflarını yönetebilsin
+yield MenuItem::linkToUrl('Odalarım', 'fas fa-door-open', $urlGen->unsetAll()->setController(WeddingRoomCrudController::class)->generateUrl());
+yield MenuItem::linkToUrl('Düğünler', 'fas fa-ring', $urlGen->unsetAll()->setController(WeddingCrudController::class)->generateUrl());
+yield MenuItem::linkToUrl('Fotoğraflar', 'fas fa-camera', $urlGen->unsetAll()->setController(PhotoCrudController::class)->generateUrl());
+}
 }

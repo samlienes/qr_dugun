@@ -31,5 +31,6 @@ security:
         - { path: ^/verify, roles: PUBLIC_ACCESS }
         - { path: ^/wedding, roles: PUBLIC_ACCESS }
         - { path: ^/contract, roles: PUBLIC_ACCESS }
-        # Sadece adminleri korumaya aldık
-        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/salon/login, roles: PUBLIC_ACCESS }
+        - { path: ^/salon, roles: ROLE_ADMIN }
+        - { path: ^/admin, roles: ROLE_SUPER_ADMIN }

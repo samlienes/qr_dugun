@@ -12,6 +12,9 @@ use Symfony\Bundle\SecurityBundle\Security;
 
 class SecurityController extends AbstractController
 {
+    // ==========================================
+    // NORMAL KULLANICI (MÜŞTERİ) GİRİŞİ
+    // ==========================================
     #[Route(path: '/login', name: 'app_login', methods: ['GET', 'POST'])]
     public function login(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, Security $security): Response
     {
@@ -27,7 +30,7 @@ class SecurityController extends AbstractController
 
             $security->login($user);
 
-            // AKILLI YÖNLENDİRME: Session'da düğün kodu varsa oraya git
+            // Müşteri için düğün kodu yönlendirmesi
             $targetWeddingCode = $request->getSession()->get('target_wedding_code');
             if ($targetWeddingCode) {
                 $request->getSession()->remove('target_wedding_code');
@@ -40,6 +43,46 @@ class SecurityController extends AbstractController
         return $this->render('security/login.html.twig');
     }
 
+    // ==========================================
+    // SALON GÖREVLİSİ / YÖNETİCİ GİRİŞİ
+    // ==========================================
+    #[Route(path: '/salon/login', name: 'app_salon_login', methods: ['GET', 'POST'])]
+    public function salonLogin(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, Security $security): Response
+    {
+        // Eğer zaten giriş yapmışsa ve yetkisi varsa direkt panele yönlendir
+        if ($this->isGranted('ROLE_ADMIN')) {
+            return $this->redirectToRoute('salon_admin');
+        }
+
+        if ($request->isMethod('POST')) {
+            $phone = $request->request->get('phoneNumber');
+            $plainPassword = $request->request->get('password');
+            $user = $entityManager->getRepository(AppUser::class)->findOneBy(['phoneNumber' => $phone]);
+
+            if (!$user || !$passwordHasher->isPasswordValid($user, $plainPassword)) {
+                $this->addFlash('error', 'Numaranız veya şifreniz hatalı.');
+                return $this->redirectToRoute('app_salon_login');
+            }
+
+            // GÜVENLİK: Bu ekrandan sadece Admin yetkisi olanlar giriş yapabilsin
+            $roles = $user->getRoles();
+            if (!in_array('ROLE_ADMIN', $roles) && !in_array('ROLE_SUPER_ADMIN', $roles)) {
+                $this->addFlash('error', 'Bu panele giriş yetkiniz bulunmuyor.');
+                return $this->redirectToRoute('app_salon_login');
+            }
+
+            $security->login($user);
+
+            // Yetkili girişi başarılıysa hiçbir şeye bakmadan direkt panele yolla
+            return $this->redirectToRoute('salon_admin');
+        }
+
+        return $this->render('security/salon_login.html.twig');
+    }
+
+    // ==========================================
+    // ÇIKIŞ İŞLEMİ
+    // ==========================================
     #[Route(path: '/logout', name: 'app_logout')]
     public function logout(Security $security): Response
     {
@@ -47,6 +90,9 @@ class SecurityController extends AbstractController
         return $this->redirectToRoute('app_home');
     }
 
+    // ==========================================
+    // ŞİFRE SIFIRLAMA İŞLEMLERİ
+    // ==========================================
     #[Route(path: '/forgot-password', name: 'app_forgot_password', methods: ['GET', 'POST'])]
     public function forgotPassword(Request $request, EntityManagerInterface $entityManager): Response
     {
@@ -100,7 +146,7 @@ class SecurityController extends AbstractController
     #[Route(path: '/reset-password', name: 'app_reset_password', methods: ['GET', 'POST'])]
     public function resetPassword(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
     {
-        // Session'dan kullanıcının numarasını çekiyoruz ki başkası direkt bu sayfaya giremesin
+
         $phone = $request->getSession()->get('reset_password_phone');
 
         if (!$phone) {
@@ -114,19 +160,13 @@ class SecurityController extends AbstractController
             if ($user && $plainPassword) {
                 $hashedPassword = $passwordHasher->hashPassword($user, $plainPassword);
                 $user->setPassword($hashedPassword);
-
-                // Güvenlik için doğrulama kodunu temizle
                 $user->setVerificationCode(null);
                 $entityManager->flush();
-
-                // İşlem bittiği için session'ı temizle
                 $request->getSession()->remove('reset_password_phone');
-
                 $this->addFlash('success', 'Şifren başarıyla güncellendi. Şimdi giriş yapabilirsin.');
                 return $this->redirectToRoute('app_login');
             }
         }
-
         return $this->render('security/reset_password.html.twig');
     }
 }
